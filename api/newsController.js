@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
     
   }
 
-  if (req.method === "POST") {
+  if(req.method === "POST") {
     try {
       const news = new News(req.body);
       const savedNews = await news.save();
