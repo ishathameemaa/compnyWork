@@ -2,9 +2,15 @@ const News = require("./models/newsModel");
 import clientPromise from "./dbConnect";
 
 module.exports = async (req, res) => {
-  await clientPromise();
+  const {collections, id } = req.query;
 
-  const { id } = req.query;
+  await clientPromise(collections);
+
+
+  if (!collections) {
+    return responseHandler(res,400,"project name is required")
+    
+  }
 
   if (req.method === "POST") {
     try {
@@ -16,6 +22,7 @@ module.exports = async (req, res) => {
     }
   }
 
+
   if (req.method === "GET") {
     try {
       const newsList = await News.find().sort({ createdAt: -1 });
@@ -23,7 +30,9 @@ module.exports = async (req, res) => {
     } catch (error) {
       return res.status(500).json({ message: "Error fetching news", error });
     }
+    
   }
+
 
   if (req.method === "PUT") {
     try {
