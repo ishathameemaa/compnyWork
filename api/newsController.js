@@ -1,18 +1,46 @@
-const News = require("./models/newsModel");
-import clientPromise from "./dbConnect";
+import mongoose from "mongoose";
+import dbConnect from "./dbConnect";
+
+const NewsSchema = new mongoose.Schema(
+  {
+    category: {
+      type: String,
+      enum: [
+        "Latest",
+        "Current Affairs",
+        "Trending",
+        "History",
+        "Entertainment",
+        "Volunteering",
+        "Events/ Programmes",
+      ],
+    },
+    title: { type: String },
+    content: { type: String },
+    media: { type: String },
+    status: {
+      type: String,
+      enum: ["published", "unpublished"],
+      default: "unpublished",
+    },
+    pdf: { type: String },
+  },
+  { timestamps: true }
+);
 
 module.exports = async (req, res) => {
-  const {collections, id } = req.query;
-
-  await clientPromise(collections);
-
+  const { collections, id } = req.query;
 
   if (!collections) {
-    return responseHandler(res,400,"project name is required")
-    
+    return res.status(400).json({ message: "project name is required" });
   }
 
-  if(req.method === "POST") {
+  await dbConnect(collections); // This connects to the right DB
+
+  // Create or reuse model on the correct connection
+  const News = mongoose.models.News || mongoose.model("News", NewsSchema);
+
+  if (req.method === "POST") {
     try {
       const news = new News(req.body);
       const savedNews = await news.save();
@@ -22,7 +50,6 @@ module.exports = async (req, res) => {
     }
   }
 
-
   if (req.method === "GET") {
     try {
       const newsList = await News.find().sort({ createdAt: -1 });
@@ -30,9 +57,7 @@ module.exports = async (req, res) => {
     } catch (error) {
       return res.status(500).json({ message: "Error fetching news", error });
     }
-    
   }
-
 
   if (req.method === "PUT") {
     try {
